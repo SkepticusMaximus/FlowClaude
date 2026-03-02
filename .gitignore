@@ -1,0 +1,16 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local config — never commit, contains machine-specific SDK path
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.xml~
+
+# Keys — never commit signing keys
+*.keystore
+*.jks
