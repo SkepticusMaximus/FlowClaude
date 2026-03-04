@@ -3,4 +3,7 @@
     <color name="background">#FFFFFF</color>
     <color name="text_primary">#1A1A1A</color>
     <color name="text_secondary">#666666</color>
+    <color name="check_pass">#2E7D32</color>
+    <color name="check_fail">#C62828</color>
+    <color name="check_pending">#F57C00</color>
 </resources>

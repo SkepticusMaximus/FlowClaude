@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -21,19 +22,156 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="48dp"
+        android:layout_marginBottom="32dp"
         android:text="Claude Code for Android"
         android:textSize="16sp"
         android:textColor="@color/text_secondary" />
 
+    <!-- Pre-flight checklist card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Setup Checklist"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_secondary"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Row 1: Termux -->
+            <LinearLayout
+                android:id="@+id/row_termux"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/dot_termux"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="●"
+                    android:textSize="18sp"
+                    android:textColor="@color/check_pending"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Termux (F-Droid) installed"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <Button
+                    android:id="@+id/btn_fix_termux"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FIX"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+            <!-- Row 2: External access -->
+            <LinearLayout
+                android:id="@+id/row_external"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/dot_external"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="●"
+                    android:textSize="18sp"
+                    android:textColor="@color/check_pending"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="External app access enabled"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <Button
+                    android:id="@+id/btn_fix_external"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="SETUP"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <!-- Row 3: Termux:API -->
+            <LinearLayout
+                android:id="@+id/row_api"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/dot_api"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="●"
+                    android:textSize="18sp"
+                    android:textColor="@color/check_pending"
+                    android:layout_marginEnd="12dp" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Termux:API companion installed"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary" />
+
+                <Button
+                    android:id="@+id/btn_fix_api"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="FIX"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Install button -->
     <Button
         android:id="@+id/btnInstall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Install Claude Code"
         android:textSize="18sp"
-        android:padding="16dp" />
+        android:padding="16dp"
+        android:enabled="false" />
 
+    <!-- Log output -->
     <ScrollView
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
