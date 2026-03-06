@@ -307,6 +307,22 @@ const httpServer = http.createServer(async (req, res) => {
     return;
   }
 
+  // OAuth 2.0 Protected Resource Metadata (RFC 9728 / MCP auth spec)
+  // claude.ai checks this during MCP handshake
+  if (req.url === '/.well-known/oauth-protected-resource') {
+    const host = req.headers.host || 'localhost';
+    const proto = req.headers['x-forwarded-proto'] || 'https';
+    const resourceUrl = `${proto}://${host}`;
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      resource: resourceUrl,
+      authorization_servers: [],
+      bearer_methods_supported: ['header'],
+      resource_signing_alg_values_supported: []
+    }));
+    return;
+  }
+
   // ── Plain REST endpoints for Claude.ai web_fetch ──────────────────────────
 
   // GET /brief — full brief (all projects + notes)
