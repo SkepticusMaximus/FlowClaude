@@ -255,6 +255,9 @@ const httpServer = http.createServer(async (req, res) => {
     return;
   }
 
+  // Accept any Authorization header — no token validation
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
   if (req.url === '/mcp') {
     try {
       const sessionId = req.headers['mcp-session-id'];
