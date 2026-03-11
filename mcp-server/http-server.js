@@ -19,6 +19,17 @@ import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import http from 'http';
 
+// Catch anything that slips through before the server binds — ensures Railway
+// logs show the real error rather than a silent exit with 502.
+process.on('uncaughtException', (err) => {
+  process.stderr.write(new Date().toISOString() + ' [http] UNCAUGHT EXCEPTION: ' + err.stack + '\n');
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  process.stderr.write(new Date().toISOString() + ' [http] UNHANDLED REJECTION: ' + reason + '\n');
+  process.exit(1);
+});
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = join(__dirname, 'data');
 const CONTEXT_FILE = join(DATA_DIR, 'context.json');
@@ -39,7 +50,14 @@ function logInfo(msg) {
 
 // ── Data directory ────────────────────────────────────────────────────────────
 
-if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+if (!existsSync(DATA_DIR)) {
+  try {
+    mkdirSync(DATA_DIR, { recursive: true });
+  } catch (e) {
+    process.stderr.write(new Date().toISOString() + ' [http] Cannot create data dir: ' + e.message + '\n');
+    process.exit(1);
+  }
+}
 
 // ── Context load/save (shared with stdio server) ──────────────────────────────
 
