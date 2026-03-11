@@ -22,11 +22,12 @@ import http from 'http';
 // Catch anything that slips through before the server binds — ensures Railway
 // logs show the real error rather than a silent exit with 502.
 process.on('uncaughtException', (err) => {
-  process.stderr.write(new Date().toISOString() + ' [http] UNCAUGHT EXCEPTION: ' + err.stack + '\n');
+  process.stderr.write(new Date().toISOString() + ' [http] UNCAUGHT EXCEPTION: ' + (err?.stack || err) + '\n');
   process.exit(1);
 });
 process.on('unhandledRejection', (reason) => {
-  process.stderr.write(new Date().toISOString() + ' [http] UNHANDLED REJECTION: ' + reason + '\n');
+  const detail = (reason instanceof Error) ? reason.stack : JSON.stringify(reason);
+  process.stderr.write(new Date().toISOString() + ' [http] UNHANDLED REJECTION: ' + detail + '\n');
   process.exit(1);
 });
 
@@ -35,6 +36,15 @@ const DATA_DIR = join(__dirname, 'data');
 const CONTEXT_FILE = join(DATA_DIR, 'context.json');
 const ERROR_LOG = join(DATA_DIR, 'error.log');
 const PORT = process.env.PORT || 3741;
+
+// Log startup environment so Railway deploy logs show what's happening
+process.stdout.write(
+  new Date().toISOString() + ' [http] Starting — node ' + process.version +
+  ' pid=' + process.pid +
+  ' PORT=' + PORT +
+  ' cwd=' + process.cwd() +
+  ' __dirname=' + __dirname + '\n'
+);
 
 // ── Logging ───────────────────────────────────────────────────────────────────
 
@@ -53,9 +63,11 @@ function logInfo(msg) {
 if (!existsSync(DATA_DIR)) {
   try {
     mkdirSync(DATA_DIR, { recursive: true });
+    process.stdout.write(new Date().toISOString() + ' [http] Created data dir: ' + DATA_DIR + '\n');
   } catch (e) {
-    process.stderr.write(new Date().toISOString() + ' [http] Cannot create data dir: ' + e.message + '\n');
-    process.exit(1);
+    // Log the error but don't crash — the health endpoint can still serve requests
+    // even if persistent storage is unavailable.
+    process.stderr.write(new Date().toISOString() + ' [http] WARNING: Cannot create data dir (' + e.message + '); context will not persist\n');
   }
 }
 
