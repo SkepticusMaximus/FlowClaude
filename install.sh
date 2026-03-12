@@ -42,7 +42,11 @@ log ""
 
 # ── Step 1: Pre-flight checks ─────────────────────────────────────────────────
 
-log "[1/7] Running pre-flight checks..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MCP_SRC="$SCRIPT_DIR/mcp-server"
+MCP_DIR="$HOME/mcp-context-server"
+
+log "[1/8] Running pre-flight checks..."
 
 # Internet connectivity
 log "  Checking internet..."
@@ -71,39 +75,39 @@ log ""
 # ── Step 2: Update package lists ──────────────────────────────────────────────
 
 if [ "$ALREADY_INSTALLED" = false ]; then
-    log "[2/7] Updating Termux packages..."
+    log "[2/8] Updating Termux packages..."
     retry pkg update -y
     log "  ✓ Done"
 else
-    log "[2/7] Skipping pkg update (already installed)"
+    log "[2/8] Skipping pkg update (already installed)"
 fi
 log ""
 
 # ── Step 3: Install dependencies ──────────────────────────────────────────────
 
 if [ "$ALREADY_INSTALLED" = false ]; then
-    log "[3/7] Installing dependencies (nodejs, git, proot, termux-api)..."
+    log "[3/8] Installing dependencies (nodejs, git, proot, termux-api)..."
     retry pkg install -y nodejs git proot termux-api
     log "  ✓ Done"
 else
-    log "[3/7] Skipping package install (already installed)"
+    log "[3/8] Skipping package install (already installed)"
 fi
 log ""
 
 # ── Step 4: Install Claude Code ───────────────────────────────────────────────
 
 if [ "$ALREADY_INSTALLED" = false ]; then
-    log "[4/7] Installing Claude Code via npm..."
+    log "[4/8] Installing Claude Code via npm..."
     retry npm install -g @anthropic-ai/claude-code
     log "  ✓ Done"
 else
-    log "[4/7] Skipping Claude Code install (already installed)"
+    log "[4/8] Skipping Claude Code install (already installed)"
 fi
 log ""
 
 # ── Step 5: Configure .bashrc ─────────────────────────────────────────────────
 
-log "[5/7] Configuring .bashrc..."
+log "[5/8] Configuring .bashrc..."
 
 BASHRC="$HOME/.bashrc"
 PROOT_LINE='proot -b $TMPDIR:/tmp claude'
@@ -120,7 +124,7 @@ log ""
 
 # ── Step 6: Enable external app access ────────────────────────────────────────
 
-log "[6/7] Enabling external app access..."
+log "[6/8] Enabling external app access..."
 
 TERMUX_PROPS="$HOME/.termux/termux.properties"
 mkdir -p "$HOME/.termux"
@@ -136,9 +140,56 @@ termux-reload-settings 2>/dev/null && log "  ✓ Settings reloaded" || \
     log "  ⚠ Could not reload settings — restart Termux to apply."
 log ""
 
-# ── Step 7: Verification pass ─────────────────────────────────────────────────
+# ── Step 7: Local MCP server setup ───────────────────────────────────────────
 
-log "[7/7] Running verification checks..."
+if [ -d "$MCP_SRC" ]; then
+    log "[7/8] Setting up local MCP context server..."
+
+    # Copy server files if not already present
+    if [ ! -d "$MCP_DIR" ]; then
+        cp -r "$MCP_SRC" "$MCP_DIR"
+        log "  ✓ Copied MCP server files to $MCP_DIR"
+    else
+        log "  MCP server directory already exists, skipping copy"
+    fi
+
+    # Install npm dependencies (production only)
+    log "  Installing MCP server npm dependencies..."
+    retry npm --prefix "$MCP_DIR" install --omit=dev
+    log "  ✓ Dependencies installed"
+
+    # Register with Claude Code via HTTP transport (user scope)
+    log "  Registering MCP server with Claude Code..."
+    if claude mcp list 2>/dev/null | grep -q "flowclaude-context"; then
+        log "  Already registered, skipping"
+    else
+        if claude mcp add --transport http flowclaude-context \
+                http://localhost:3000/mcp --scope user >> "$LOGFILE" 2>&1; then
+            log "  ✓ Registered as 'flowclaude-context' (user scope)"
+        else
+            log "  ⚠ Could not register now — run after first 'claude' launch:"
+            log "    claude mcp add --transport http flowclaude-context http://localhost:3000/mcp --scope user"
+        fi
+    fi
+
+    # Add mcp-start / mcp-stop aliases to .bashrc
+    if ! grep -qF "mcp-start" "$BASHRC" 2>/dev/null; then
+        echo "" >> "$BASHRC"
+        echo "# FlowClaude: local MCP context server" >> "$BASHRC"
+        echo "alias mcp-start='node \$HOME/mcp-context-server/index.js >> \$HOME/mcp-context-server/server.log 2>&1 &'" >> "$BASHRC"
+        echo "alias mcp-stop='pkill -f mcp-context-server/index.js'" >> "$BASHRC"
+        log "  ✓ Added mcp-start / mcp-stop aliases to .bashrc"
+    else
+        log "  .bashrc MCP aliases already present, skipping"
+    fi
+else
+    log "[7/8] Skipping MCP server setup (mcp-server directory not found)"
+fi
+log ""
+
+# ── Step 8: Verification pass ─────────────────────────────────────────────────
+
+log "[8/8] Running verification checks..."
 
 VERIFY_FAILED=false
 
@@ -197,6 +248,15 @@ log "  F-Droid if not already done."
 log ""
 log "  Open a NEW Termux session to"
 log "  start Claude Code."
+log ""
+if [ -d "$MCP_DIR" ]; then
+log "  Local MCP server installed at:"
+log "  ~/mcp-context-server"
+log ""
+log "  Start it with:  mcp-start"
+log "  Stop it with:   mcp-stop"
+log "  (aliases active in new session)"
+fi
 log "=============================="
 log ""
 log "Full log saved to: $LOGFILE"
